@@ -52,6 +52,7 @@ def client(api_base_url):
 # ===========================================================================
 
 @pytest.mark.api
+@pytest.mark.regression
 class TestLoginPositive:
 
     def test_valid_login_returns_200(self, client):
@@ -108,6 +109,7 @@ class TestLoginPositive:
 # ===========================================================================
 
 @pytest.mark.api
+@pytest.mark.regression
 class TestLoginNegative:
 
     def test_missing_password_returns_400(self, client):
@@ -166,8 +168,8 @@ class TestLoginNegative:
         assert_status(resp, 400)
 
     def test_invalid_endpoint_returns_404(self, client):
-        """Accessing a non-existent auth endpoint must return 404, not 500."""
-        resp = client.post("/login_invalid_endpoint")
+        """A GET to a non-existent path must return 404, not 500."""
+        resp = client.get("/login_invalid_endpoint_xyz")
         assert_status(resp, 404)
 
 
@@ -176,6 +178,7 @@ class TestLoginNegative:
 # ===========================================================================
 
 @pytest.mark.api
+@pytest.mark.regression
 class TestRegisterPositive:
 
     def test_valid_register_returns_200(self, client):
@@ -216,6 +219,7 @@ class TestRegisterPositive:
 # ===========================================================================
 
 @pytest.mark.api
+@pytest.mark.regression
 class TestRegisterNegative:
 
     def test_missing_password_returns_400(self, client):
@@ -264,6 +268,7 @@ class TestRegisterNegative:
 # ===========================================================================
 
 @pytest.mark.api
+@pytest.mark.regression
 class TestTokenUsage:
 
     def test_set_bearer_token_is_sent_in_header(self, client):

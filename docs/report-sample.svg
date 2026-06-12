@@ -1,0 +1,132 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 540" font-family="'Segoe UI', system-ui, sans-serif">
+  <!-- Background -->
+  <rect width="820" height="540" fill="#f5f5f5" rx="8"/>
+
+  <!-- Browser chrome -->
+  <rect width="820" height="36" fill="#e0e0e0" rx="8"/>
+  <rect y="28" width="820" height="8" fill="#e0e0e0"/>
+  <circle cx="18" cy="18" r="6" fill="#ff5f57"/>
+  <circle cx="36" cy="18" r="6" fill="#febc2e"/>
+  <circle cx="54" cy="18" r="6" fill="#28c840"/>
+  <rect x="80" y="9" width="480" height="18" rx="9" fill="#ffffff"/>
+  <text x="320" y="22" font-size="11" fill="#888" text-anchor="middle">reports/report.html</text>
+
+  <!-- Page header -->
+  <rect y="36" width="820" height="60" fill="#2c3e50"/>
+  <text x="24" y="66" font-size="18" font-weight="bold" fill="#ffffff">AutoQA Test Report</text>
+  <text x="24" y="84" font-size="12" fill="#95a5a6">Generated 2026-06-12 · pytest-html 4.1.1</text>
+
+  <!-- Summary bar -->
+  <rect y="96" width="820" height="80" fill="#ffffff"/>
+
+  <!-- Passed pill -->
+  <rect x="24" y="112" width="110" height="48" rx="6" fill="#27ae60"/>
+  <text x="79" y="131" font-size="11" fill="#ffffff" text-anchor="middle" font-weight="600">PASSED</text>
+  <text x="79" y="151" font-size="22" fill="#ffffff" text-anchor="middle" font-weight="700">98</text>
+
+  <!-- Failed pill -->
+  <rect x="148" y="112" width="110" height="48" rx="6" fill="#e74c3c"/>
+  <text x="203" y="131" font-size="11" fill="#ffffff" text-anchor="middle" font-weight="600">FAILED</text>
+  <text x="203" y="151" font-size="22" fill="#ffffff" text-anchor="middle" font-weight="700">0</text>
+
+  <!-- Xfail pill -->
+  <rect x="272" y="112" width="110" height="48" rx="6" fill="#f39c12"/>
+  <text x="327" y="131" font-size="11" fill="#ffffff" text-anchor="middle" font-weight="600">XFAIL</text>
+  <text x="327" y="151" font-size="22" fill="#ffffff" text-anchor="middle" font-weight="700">2</text>
+
+  <!-- Skipped pill -->
+  <rect x="396" y="112" width="110" height="48" rx="6" fill="#7f8c8d"/>
+  <text x="451" y="131" font-size="11" fill="#ffffff" text-anchor="middle" font-weight="600">SKIPPED</text>
+  <text x="451" y="151" font-size="22" fill="#ffffff" text-anchor="middle" font-weight="700">0</text>
+
+  <!-- Duration -->
+  <text x="600" y="131" font-size="12" fill="#555">Duration</text>
+  <text x="600" y="154" font-size="20" font-weight="700" fill="#2c3e50">1m 43s</text>
+
+  <!-- Divider -->
+  <line x1="0" y1="176" x2="820" y2="176" stroke="#e0e0e0" stroke-width="1"/>
+
+  <!-- Filter bar -->
+  <rect y="176" width="820" height="36" fill="#fafafa"/>
+  <text x="24" y="199" font-size="12" fill="#555">Filter by:</text>
+  <rect x="90" y="184" width="60" height="20" rx="10" fill="#27ae60"/>
+  <text x="120" y="198" font-size="11" fill="#fff" text-anchor="middle">passed</text>
+  <rect x="158" y="184" width="56" height="20" rx="10" fill="#e74c3c"/>
+  <text x="186" y="198" font-size="11" fill="#fff" text-anchor="middle">failed</text>
+  <rect x="222" y="184" width="52" height="20" rx="10" fill="#f39c12"/>
+  <text x="248" y="198" font-size="11" fill="#fff" text-anchor="middle">xfail</text>
+  <text x="700" y="199" font-size="12" fill="#888">100 tests collected</text>
+
+  <!-- Table header -->
+  <rect y="212" width="820" height="28" fill="#ecf0f1"/>
+  <text x="24" y="231" font-size="11" font-weight="600" fill="#555">Result</text>
+  <text x="100" y="231" font-size="11" font-weight="600" fill="#555">Test</text>
+  <text x="620" y="231" font-size="11" font-weight="600" fill="#555">Duration</text>
+  <text x="700" y="231" font-size="11" font-weight="600" fill="#555">Links</text>
+
+  <!-- Row 1 - passed -->
+  <rect y="240" width="820" height="28" fill="#ffffff"/>
+  <rect x="24" y="249" width="48" height="12" rx="6" fill="#27ae60"/>
+  <text x="48" y="259" font-size="10" fill="#fff" text-anchor="middle">PASSED</text>
+  <text x="100" y="259" font-size="11" fill="#2c3e50">tests/regression/test_smoke.py::TestSmokeUI::test_valid_login_reaches_inventory</text>
+  <text x="626" y="259" font-size="11" fill="#555">0.83s</text>
+
+  <!-- Row 2 - passed -->
+  <rect y="268" width="820" height="28" fill="#f9f9f9"/>
+  <rect x="24" y="277" width="48" height="12" rx="6" fill="#27ae60"/>
+  <text x="48" y="287" font-size="10" fill="#fff" text-anchor="middle">PASSED</text>
+  <text x="100" y="287" font-size="11" fill="#2c3e50">tests/regression/test_smoke.py::TestSmokeAPI::test_list_users_returns_200</text>
+  <text x="626" y="287" font-size="11" fill="#555">0.31s</text>
+
+  <!-- Row 3 - passed -->
+  <rect y="296" width="820" height="28" fill="#ffffff"/>
+  <rect x="24" y="305" width="48" height="12" rx="6" fill="#27ae60"/>
+  <text x="48" y="315" font-size="10" fill="#fff" text-anchor="middle">PASSED</text>
+  <text x="100" y="315" font-size="11" fill="#2c3e50">tests/ui/test_login.py::TestLoginPositive::test_valid_credentials_reach_inventory</text>
+  <text x="626" y="315" font-size="11" fill="#555">1.12s</text>
+
+  <!-- Row 4 - passed -->
+  <rect y="324" width="820" height="28" fill="#f9f9f9"/>
+  <rect x="24" y="333" width="48" height="12" rx="6" fill="#27ae60"/>
+  <text x="48" y="343" font-size="10" fill="#fff" text-anchor="middle">PASSED</text>
+  <text x="100" y="343" font-size="11" fill="#2c3e50">tests/api/test_users_api.py::TestGetUsersList::test_list_users_page1_and_page2_are_disjoint</text>
+  <text x="626" y="343" font-size="11" fill="#555">0.58s</text>
+
+  <!-- Row 5 - xfail -->
+  <rect y="352" width="820" height="28" fill="#fffbf0"/>
+  <rect x="24" y="361" width="48" height="12" rx="6" fill="#f39c12"/>
+  <text x="48" y="371" font-size="10" fill="#fff" text-anchor="middle">XFAIL</text>
+  <text x="100" y="371" font-size="11" fill="#2c3e50">tests/ui/test_negative_investigative.py::TestCheckoutNegative::test_checkout_with_empty_cart_is_blocked</text>
+  <text x="626" y="371" font-size="11" fill="#555">1.44s</text>
+
+  <!-- Row 6 - passed -->
+  <rect y="380" width="820" height="28" fill="#ffffff"/>
+  <rect x="24" y="389" width="48" height="12" rx="6" fill="#27ae60"/>
+  <text x="48" y="399" font-size="10" fill="#fff" text-anchor="middle">PASSED</text>
+  <text x="100" y="399" font-size="11" fill="#2c3e50">tests/ui/test_bs4_validation.py::TestInventoryPageBS4::test_product_count_in_html_is_six</text>
+  <text x="626" y="399" font-size="11" fill="#555">0.74s</text>
+
+  <!-- Row 7 - passed -->
+  <rect y="408" width="820" height="28" fill="#f9f9f9"/>
+  <rect x="24" y="417" width="48" height="12" rx="6" fill="#27ae60"/>
+  <text x="48" y="427" font-size="10" fill="#fff" text-anchor="middle">PASSED</text>
+  <text x="100" y="427" font-size="11" fill="#2c3e50">tests/api/test_auth_api.py::TestLoginPositive::test_valid_login_returns_token</text>
+  <text x="626" y="427" font-size="11" fill="#555">0.42s</text>
+
+  <!-- Row 8 - passed -->
+  <rect y="436" width="820" height="28" fill="#ffffff"/>
+  <rect x="24" y="445" width="48" height="12" rx="6" fill="#27ae60"/>
+  <text x="48" y="455" font-size="10" fill="#fff" text-anchor="middle">PASSED</text>
+  <text x="100" y="455" font-size="11" fill="#2c3e50">tests/ui/test_cart_checkout.py::TestCartCheckout::test_single_item_full_checkout</text>
+  <text x="626" y="455" font-size="11" fill="#555">3.21s</text>
+
+  <!-- fade-out -->
+  <rect y="464" width="820" height="76" fill="url(#fade)"/>
+  <defs>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f5f5f5" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#f5f5f5" stop-opacity="1"/>
+    </linearGradient>
+  </defs>
+  <text x="410" y="520" font-size="11" fill="#aaa" text-anchor="middle">… 92 more rows …</text>
+</svg>

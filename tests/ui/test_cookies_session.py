@@ -19,6 +19,7 @@ SESSION_COOKIE = "session-username"
 
 
 @pytest.mark.ui
+@pytest.mark.regression
 class TestSessionCookieLifecycle:
 
     def test_cookie_absent_before_login(self, driver, base_url):
@@ -66,6 +67,7 @@ class TestSessionCookieLifecycle:
 
 
 @pytest.mark.ui
+@pytest.mark.regression
 class TestSessionPersistence:
 
     def test_cart_count_persists_across_navigation(self, authenticated_driver, base_url):

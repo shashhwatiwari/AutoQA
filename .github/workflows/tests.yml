@@ -1,55 +1,145 @@
 name: AutoQA Test Suite
 
+# ---------------------------------------------------------------------------
+# Triggers
+# ---------------------------------------------------------------------------
 on:
   push:
     branches: [main, develop]
   pull_request:
     branches: [main]
   schedule:
-    - cron: "0 6 * * *"   # daily regression at 06:00 UTC
+    #            ┌─ min  ┌─ hour (UTC)  ┌─ day-of-month  ┌─ month  ┌─ day-of-week
+    - cron: "0 6 * * *"   # daily at 06:00 UTC — matches "debug failed daily automation executions"
   workflow_dispatch:
     inputs:
       marker:
-        description: "pytest marker to run (smoke | regression | ui | api)"
+        description: "pytest marker to run (smoke | regression | ui | api | slow)"
         required: false
         default: ""
+      tb_style:
+        description: "pytest traceback style (short | long | line)"
+        required: false
+        default: "short"
 
+# ---------------------------------------------------------------------------
+# Shared defaults
+# ---------------------------------------------------------------------------
+defaults:
+  run:
+    working-directory: .
+
+env:
+  PYTHON_VERSION: "3.11"
+  BASE_URL: "https://www.saucedemo.com"
+  API_BASE_URL: "https://reqres.in/api"
+  INTERNET_BASE_URL: "https://the-internet.herokuapp.com"
+
+# ---------------------------------------------------------------------------
+# Jobs
+# ---------------------------------------------------------------------------
 jobs:
-  api-tests:
-    name: API Tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - name: Set up Python
+  # =========================================================================
+  # 1. API tests — no browser needed, safe to run in parallel with -n auto
+  # =========================================================================
+  api-tests:
+    name: "API Tests"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
 
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run API tests
-        run: pytest -m api --tb=short
+      - name: Show environment
+        run: |
+          python --version
+          pip show pytest selenium requests beautifulsoup4 | grep -E "^(Name|Version)"
 
-      - name: Upload report
+      - name: Create reports directory
+        run: mkdir -p reports
+
+      - name: Run API tests
+        env:
+          API_BASE_URL: ${{ vars.API_BASE_URL || env.API_BASE_URL }}
+          REQRES_API_KEY: ${{ secrets.REQRES_API_KEY }}
+        run: |
+          MARKER="${{ github.event.inputs.marker || 'api' }}"
+          TB="${{ github.event.inputs.tb_style || 'short' }}"
+          # Daily cron: use long tracebacks for easier debugging
+          if [ "${{ github.event_name }}" = "schedule" ]; then TB="long"; fi
+          pytest -m "$MARKER" \
+            -n auto \
+            --tb="$TB" \
+            --html=reports/api-report.html \
+            --self-contained-html \
+            --junitxml=reports/api-junit.xml \
+            -v
+
+      - name: Write job summary
+        if: always()
+        run: |
+          echo "## API Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f reports/api-junit.xml ]; then
+            TESTS=$(python3 -c "
+          import xml.etree.ElementTree as ET
+          tree = ET.parse('reports/api-junit.xml')
+          root = tree.getroot()
+          suite = root if root.tag == 'testsuite' else root.find('testsuite')
+          if suite is None: suite = root
+          print(f\"| Tests | {suite.get('tests','?')} |\")
+          print(f\"| Failures | {suite.get('failures','?')} |\")
+          print(f\"| Errors | {suite.get('errors','?')} |\")
+          print(f\"| Skipped | {suite.get('skipped','?')} |\")
+          ")
+            echo "| Metric | Count |" >> $GITHUB_STEP_SUMMARY
+            echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+            echo "$TESTS" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "_JUnit report not found — tests may have failed to start._" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload HTML report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: api-report
-          path: reports/report.html
+          name: api-html-report-${{ github.run_number }}
+          path: reports/api-report.html
+          if-no-files-found: warn
 
+      - name: Upload JUnit XML
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-junit-${{ github.run_number }}
+          path: reports/api-junit.xml
+          if-no-files-found: warn
+
+  # =========================================================================
+  # 2. UI tests — headless Chrome, Selenium, sequential (one browser per test)
+  # =========================================================================
   ui-tests:
-    name: UI Tests (headless Chrome)
+    name: "UI Tests (headless Chrome)"
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - name: Set up Python
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
 
       - name: Install dependencies
@@ -57,32 +147,96 @@ jobs:
 
       - name: Install Chrome
         uses: browser-actions/setup-chrome@v1
+
+      - name: Show environment
+        run: |
+          python --version
+          google-chrome --version || chromium --version || true
+          pip show pytest selenium | grep -E "^(Name|Version)"
+
+      - name: Create reports directory
+        run: mkdir -p reports
 
       - name: Run UI tests
         env:
           CI: "true"
-          BASE_URL: ${{ vars.BASE_URL || 'https://www.saucedemo.com' }}
-        run: pytest -m ui --headless --tb=short
+          BASE_URL: ${{ vars.BASE_URL || env.BASE_URL }}
+          INTERNET_BASE_URL: ${{ vars.INTERNET_BASE_URL || env.INTERNET_BASE_URL }}
+        run: |
+          MARKER="${{ github.event.inputs.marker || 'ui and not slow' }}"
+          TB="${{ github.event.inputs.tb_style || 'short' }}"
+          if [ "${{ github.event_name }}" = "schedule" ]; then TB="long"; fi
+          pytest -m "$MARKER" \
+            --headless \
+            --tb="$TB" \
+            --html=reports/ui-report.html \
+            --self-contained-html \
+            --junitxml=reports/ui-junit.xml \
+            -v
 
-      - name: Upload report
+      - name: Write job summary
+        if: always()
+        run: |
+          echo "## UI Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f reports/ui-junit.xml ]; then
+            TESTS=$(python3 -c "
+          import xml.etree.ElementTree as ET
+          tree = ET.parse('reports/ui-junit.xml')
+          root = tree.getroot()
+          suite = root if root.tag == 'testsuite' else root.find('testsuite')
+          if suite is None: suite = root
+          print(f\"| Tests | {suite.get('tests','?')} |\")
+          print(f\"| Failures | {suite.get('failures','?')} |\")
+          print(f\"| Errors | {suite.get('errors','?')} |\")
+          print(f\"| Skipped | {suite.get('skipped','?')} |\")
+          ")
+            echo "| Metric | Count |" >> $GITHUB_STEP_SUMMARY
+            echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+            echo "$TESTS" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "_JUnit report not found — tests may have failed to start._" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload HTML report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ui-report
-          path: reports/report.html
+          name: ui-html-report-${{ github.run_number }}
+          path: reports/ui-report.html
+          if-no-files-found: warn
 
-  smoke-tests:
-    name: Smoke / Regression
+      - name: Upload JUnit XML
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-junit-${{ github.run_number }}
+          path: reports/ui-junit.xml
+          if-no-files-found: warn
+
+  # =========================================================================
+  # 3. Regression / smoke — runs after both jobs regardless of their outcome.
+  #    On schedule: full regression suite.
+  #    On push/PR: smoke only (fast gate).
+  #    On workflow_dispatch with marker='regression': full regression suite.
+  # =========================================================================
+  regression:
+    name: "Regression / Smoke Gate"
     runs-on: ubuntu-latest
+    # always() overrides the default skip-on-upstream-failure behaviour so
+    # this job runs even when api-tests or ui-tests fail — those failures
+    # are exactly when you need the smoke suite to confirm scope.
     needs: [api-tests, ui-tests]
-    if: github.event_name == 'schedule' || github.event.inputs.marker == 'regression'
-    steps:
-      - uses: actions/checkout@v4
+    if: always()
 
-      - name: Set up Python
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
 
       - name: Install dependencies
@@ -91,15 +245,97 @@ jobs:
       - name: Install Chrome
         uses: browser-actions/setup-chrome@v1
 
-      - name: Run smoke suite
+      - name: Show environment
+        run: |
+          python --version
+          google-chrome --version || chromium --version || true
+
+      - name: Create reports directory
+        run: mkdir -p reports
+
+      - name: Determine marker and traceback style
+        id: config
+        run: |
+          # Default: smoke on push/PR, full regression on schedule or explicit dispatch
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "marker=regression" >> $GITHUB_OUTPUT
+            echo "tb=long" >> $GITHUB_OUTPUT
+            echo "label=Daily Regression" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event.inputs.marker }}" = "regression" ]; then
+            echo "marker=regression" >> $GITHUB_OUTPUT
+            echo "tb=${{ github.event.inputs.tb_style || 'short' }}" >> $GITHUB_OUTPUT
+            echo "label=Manual Regression" >> $GITHUB_OUTPUT
+          else
+            echo "marker=smoke" >> $GITHUB_OUTPUT
+            echo "tb=short" >> $GITHUB_OUTPUT
+            echo "label=Smoke Gate" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run ${{ steps.config.outputs.label }}
         env:
           CI: "true"
-          BASE_URL: ${{ vars.BASE_URL || 'https://www.saucedemo.com' }}
-        run: pytest -m "smoke or regression" --headless --tb=short
+          BASE_URL: ${{ vars.BASE_URL || env.BASE_URL }}
+          API_BASE_URL: ${{ vars.API_BASE_URL || env.API_BASE_URL }}
+          INTERNET_BASE_URL: ${{ vars.INTERNET_BASE_URL || env.INTERNET_BASE_URL }}
+          REQRES_API_KEY: ${{ secrets.REQRES_API_KEY }}
+        run: |
+          pytest -m "${{ steps.config.outputs.marker }}" \
+            --headless \
+            --tb="${{ steps.config.outputs.tb }}" \
+            --html=reports/regression-report.html \
+            --self-contained-html \
+            --junitxml=reports/regression-junit.xml \
+            -v
 
-      - name: Upload report
+      - name: Write job summary
+        if: always()
+        run: |
+          echo "## ${{ steps.config.outputs.label }} Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Trigger:** \`${{ github.event_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Marker:** \`${{ steps.config.outputs.marker }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Upstream job outcomes:**" >> $GITHUB_STEP_SUMMARY
+          echo "- api-tests: \`${{ needs.api-tests.result }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- ui-tests:  \`${{ needs.ui-tests.result }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f reports/regression-junit.xml ]; then
+            TESTS=$(python3 -c "
+          import xml.etree.ElementTree as ET
+          tree = ET.parse('reports/regression-junit.xml')
+          root = tree.getroot()
+          suite = root if root.tag == 'testsuite' else root.find('testsuite')
+          if suite is None: suite = root
+          print(f\"| Tests | {suite.get('tests','?')} |\")
+          print(f\"| Failures | {suite.get('failures','?')} |\")
+          print(f\"| Errors | {suite.get('errors','?')} |\")
+          print(f\"| Skipped | {suite.get('skipped','?')} |\")
+          ")
+            echo "| Metric | Count |" >> $GITHUB_STEP_SUMMARY
+            echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+            echo "$TESTS" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload HTML report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: smoke-report
-          path: reports/report.html
+          name: regression-html-report-${{ github.run_number }}
+          path: reports/regression-report.html
+          if-no-files-found: warn
+
+      - name: Upload JUnit XML
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: regression-junit-${{ github.run_number }}
+          path: reports/regression-junit.xml
+          if-no-files-found: warn
+
+      - name: Fail workflow if smoke/regression failed and trigger was schedule
+        # Surface a clear failure on the daily cron so the team gets notified.
+        # On push/PR the individual job failures are already visible.
+        if: failure() && github.event_name == 'schedule'
+        run: |
+          echo "::error::Daily regression suite failed. Check the uploaded report and JUnit XML for details."
+          exit 1

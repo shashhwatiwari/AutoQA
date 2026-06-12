@@ -49,6 +49,7 @@ def client(api_base_url):
 # ===========================================================================
 
 @pytest.mark.api
+@pytest.mark.regression
 class TestGetUsersList:
 
     def test_list_users_returns_200(self, client):
@@ -134,6 +135,7 @@ class TestGetUsersList:
         for user in body["data"]:
             assert_url_format(user["avatar"])
 
+    @pytest.mark.slow
     def test_delayed_response_returns_200(self, client):
         """?delay=1 uses reqres.in's artificial delay endpoint — still returns 200."""
         resp = client.get("/users?delay=1", timeout=15)
@@ -146,6 +148,7 @@ class TestGetUsersList:
 # ===========================================================================
 
 @pytest.mark.api
+@pytest.mark.regression
 class TestGetSingleUser:
 
     def test_get_user_2_returns_200(self, client):
@@ -227,6 +230,7 @@ class TestGetSingleUser:
 # ===========================================================================
 
 @pytest.mark.api
+@pytest.mark.regression
 class TestCreateUser:
 
     _PAYLOAD = {"name": "AutoQA Bot", "job": "QA Engineer"}
@@ -292,6 +296,7 @@ class TestCreateUser:
 # ===========================================================================
 
 @pytest.mark.api
+@pytest.mark.regression
 class TestUpdateUserPut:
 
     _PAYLOAD = {"name": "Updated Bot", "job": "Senior QA"}
@@ -332,6 +337,7 @@ class TestUpdateUserPut:
 # ===========================================================================
 
 @pytest.mark.api
+@pytest.mark.regression
 class TestUpdateUserPatch:
 
     def test_patch_user_returns_200(self, client):
@@ -368,6 +374,7 @@ class TestUpdateUserPatch:
 # ===========================================================================
 
 @pytest.mark.api
+@pytest.mark.regression
 class TestDeleteUser:
 
     def test_delete_user_returns_204(self, client):

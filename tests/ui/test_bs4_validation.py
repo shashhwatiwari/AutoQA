@@ -59,6 +59,7 @@ def _full_checkout(driver, base_url, index=0):
 # ===========================================================================
 
 @pytest.mark.ui
+@pytest.mark.regression
 class TestLoginPageBS4:
 
     def test_login_form_structure_in_html(self, driver, base_url):
@@ -151,6 +152,7 @@ class TestLoginPageBS4:
 # ===========================================================================
 
 @pytest.mark.ui
+@pytest.mark.regression
 class TestInventoryPageBS4:
 
     def test_exactly_six_products_in_html(self, authenticated_driver, base_url):
@@ -290,6 +292,7 @@ class TestInventoryPageBS4:
 # ===========================================================================
 
 @pytest.mark.ui
+@pytest.mark.regression
 class TestCartPageBS4:
 
     def test_empty_cart_has_no_item_rows_in_html(self, authenticated_driver, base_url):
@@ -372,6 +375,7 @@ class TestCartPageBS4:
 # ===========================================================================
 
 @pytest.mark.ui
+@pytest.mark.regression
 class TestCheckoutOverviewBS4:
 
     def test_overview_totals_are_numeric_in_html(self, authenticated_driver, base_url):
@@ -447,6 +451,7 @@ class TestCheckoutOverviewBS4:
 # ===========================================================================
 
 @pytest.mark.ui
+@pytest.mark.regression
 class TestOrderConfirmationBS4:
 
     def test_confirmation_page_structure(self, authenticated_driver, base_url):

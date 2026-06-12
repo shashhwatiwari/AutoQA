@@ -16,6 +16,7 @@ from pages.dynamic_loading_page import DynamicLoadingPage
 
 
 @pytest.mark.ui
+@pytest.mark.slow
 class TestDynamicLoadingExample1:
     """Element is present in DOM but hidden; revealed after spinner clears."""
 
@@ -76,6 +77,7 @@ class TestDynamicLoadingExample1:
 
 
 @pytest.mark.ui
+@pytest.mark.slow
 class TestDynamicLoadingExample2:
     """Element is not in DOM at page load; injected after spinner clears."""
 

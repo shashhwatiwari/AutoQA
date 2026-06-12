@@ -12,6 +12,7 @@ assert_*      — standalone functions that raise AssertionError with a
 """
 from __future__ import annotations
 
+import os
 import re
 import requests
 
@@ -27,6 +28,12 @@ class APIClient:
         self.base_url = base_url.rstrip("/")
         self.session = requests.Session()
         self.session.headers["Content-Type"] = "application/json"
+        # reqres.in requires x-api-key for all /api/* endpoints.
+        # Key is read from REQRES_API_KEY env var (set locally via .env or
+        # passed as a GitHub Actions secret).
+        api_key = os.environ.get("REQRES_API_KEY", "")
+        if api_key:
+            self.session.headers["x-api-key"] = api_key
         if default_headers:
             self.session.headers.update(default_headers)
 

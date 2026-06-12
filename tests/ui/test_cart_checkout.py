@@ -23,6 +23,7 @@ from pages.checkout_page import CheckoutPage
 # -----------------------------------------------------------------------
 
 @pytest.mark.ui
+@pytest.mark.regression
 class TestEndToEndCheckout:
 
     def test_single_item_full_checkout(self, authenticated_driver, base_url):
@@ -138,6 +139,7 @@ class TestEndToEndCheckout:
 # -----------------------------------------------------------------------
 
 @pytest.mark.ui
+@pytest.mark.regression
 class TestCartBehaviour:
 
     def test_add_item_increments_badge(self, authenticated_driver, base_url):
@@ -199,6 +201,7 @@ class TestCartBehaviour:
 # -----------------------------------------------------------------------
 
 @pytest.mark.ui
+@pytest.mark.regression
 class TestCheckoutValidation:
 
     def _reach_checkout_step_one(self, driver, base_url):

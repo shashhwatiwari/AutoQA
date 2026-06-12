@@ -11,6 +11,7 @@ from pages.inventory_page import InventoryPage
 
 
 @pytest.mark.ui
+@pytest.mark.regression
 class TestLoginPositive:
 
     def test_standard_user_reaches_inventory(self, driver, base_url):
@@ -54,6 +55,7 @@ class TestLoginPositive:
 
 
 @pytest.mark.ui
+@pytest.mark.regression
 class TestLoginNegative:
 
     def test_wrong_password_shows_error(self, driver, base_url):
