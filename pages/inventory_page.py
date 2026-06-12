@@ -56,15 +56,18 @@ class InventoryPage(BasePage):
         Locates the button within the item's own container so the index is
         stable even when earlier items are already in the cart (their buttons
         have turned into Remove buttons, shrinking the global add-to-cart
-        list). Waits for the matching Remove button to appear before returning,
-        which confirms the React cart state has been committed and makes
-        subsequent badge/count assertions reliable.
+        list). Uses a JavaScript click because headless Chrome on Linux does
+        not always dispatch the React synthetic click event via Selenium's
+        native click(). Waits for the matching Remove button to appear before
+        returning, which confirms the React cart state has been committed and
+        makes subsequent badge/count assertions reliable.
         """
         self.wait_for_element_count(self._ITEMS, index + 1)
         item = self.driver.find_elements(*self._ITEMS)[index]
         btn = item.find_element(By.CSS_SELECTOR, "button[data-test^='add-to-cart']")
         data_test = btn.get_attribute("data-test")
-        btn.click()
+        self.driver.execute_script("arguments[0].scrollIntoView({block:'center'});", btn)
+        self.driver.execute_script("arguments[0].click();", btn)
         remove_attr = data_test.replace("add-to-cart-", "remove-", 1)
         self.wait_for_visible((By.CSS_SELECTOR, f"button[data-test='{remove_attr}']"))
 
@@ -78,17 +81,18 @@ class InventoryPage(BasePage):
         for item in self.driver.find_elements(*self._ITEMS):
             try:
                 btn = item.find_element(By.CSS_SELECTOR, "button[data-test^='add-to-cart']")
-                btn.click()
+                self.driver.execute_script("arguments[0].click();", btn)
             except Exception:
                 pass  # item already in cart
 
     def get_cart_count(self) -> int:
-        if not self.is_visible(self._CART_BADGE, timeout=2):
+        if not self.is_visible(self._CART_BADGE, timeout=5):
             return 0
         return int(self.get_text(self._CART_BADGE))
 
     def go_to_cart(self):
-        self.click(self._CART_ICON)
+        self.safe_click(self._CART_ICON)
+        self.wait_for_url_contains("cart")
 
     # ------------------------------------------------------------------
     # Sort

@@ -286,7 +286,11 @@ def assert_cart_item_prices_positive(html: str) -> None:
 
 
 def assert_cart_has_checkout_button(html: str) -> None:
-    _require(_soup(html).select_one("#checkout"), "checkout button (#checkout)")
+    soup = _soup(html)
+    _require(
+        soup.select_one("[data-test='checkout']") or soup.select_one("#checkout"),
+        "checkout button ([data-test='checkout'] or #checkout)",
+    )
 
 
 def assert_cart_quantities_are_positive(html: str) -> None:
