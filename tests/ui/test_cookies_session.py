@@ -161,7 +161,8 @@ class TestCookieClearBehaviour:
         inventory.add_item_to_cart(0)
         assert inventory.get_cart_count() == 1
 
-        # Reset session — log out via cookies, then re-login
+        # Reset session — clear cookies AND localStorage (cart state lives there)
+        login.clear_local_storage()
         login.delete_all_cookies()
         login.open()
         login.login("standard_user", "secret_sauce")

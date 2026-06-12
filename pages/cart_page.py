@@ -15,6 +15,7 @@ class CartPage(BasePage):
 
     def open(self):
         super().open(self.PATH)
+        self.wait_for_visible(self._CONTINUE_SHOPPING_BTN)
 
     def get_item_names(self) -> list[str]:
         return [el.text for el in self.driver.find_elements(*self._ITEM_NAMES)]
