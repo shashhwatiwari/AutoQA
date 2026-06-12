@@ -89,6 +89,16 @@ class APIClient:
 
 def get_json(response: requests.Response) -> dict | list:
     """Parse JSON, raising AssertionError with the raw body on failure."""
+    if response.status_code == 429:
+        import pytest
+        try:
+            resets = response.json().get("current_usage", {}).get("resets_at", "midnight UTC")
+        except Exception:
+            resets = "midnight UTC"
+        pytest.skip(
+            f"reqres.in free-tier rate limit exceeded (250 req/day). "
+            f"Resets at {resets}. Re-run tomorrow or upgrade the API key."
+        )
     try:
         return response.json()
     except Exception as exc:
@@ -99,6 +109,13 @@ def get_json(response: requests.Response) -> dict | list:
 
 
 def assert_status(response: requests.Response, expected: int) -> None:
+    if response.status_code == 429 and expected != 429:
+        import pytest
+        resets = response.json().get("current_usage", {}).get("resets_at", "midnight UTC")
+        pytest.skip(
+            f"reqres.in free-tier rate limit exceeded (250 req/day). "
+            f"Resets at {resets}. Re-run tomorrow or upgrade the API key."
+        )
     assert response.status_code == expected, (
         f"Expected HTTP {expected}, got {response.status_code}. "
         f"Body: {response.text[:500]}"
