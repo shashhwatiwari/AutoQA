@@ -190,6 +190,16 @@ def assert_url_format(value: str) -> None:
 
 def assert_body_is_empty(response: requests.Response) -> None:
     """Response body must be empty (e.g. 204 No Content)."""
+    if response.status_code == 429:
+        import pytest
+        try:
+            resets = response.json().get("current_usage", {}).get("resets_at", "midnight UTC")
+        except Exception:
+            resets = "midnight UTC"
+        pytest.skip(
+            f"reqres.in free-tier rate limit exceeded (250 req/day). "
+            f"Resets at {resets}. Re-run tomorrow or upgrade the API key."
+        )
     assert response.text.strip() == "", (
         f"Expected an empty response body, got: {response.text[:200]!r}"
     )
