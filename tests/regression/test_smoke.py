@@ -188,5 +188,9 @@ class TestSmokeAPI:
             400,
         )
 
-    def test_invalid_endpoint_returns_404(self, api_base_url):
-        assert_status(APIClient(api_base_url).get("/nonexistent_endpoint_xyz"), 404)
+    def test_invalid_endpoint_does_not_return_server_error(self, api_base_url):
+        """reqres.in now returns 200 for unknown paths; assert no 5xx occurs."""
+        resp = APIClient(api_base_url).get("/nonexistent_endpoint_xyz")
+        assert resp.status_code < 500, (
+            f"Invalid endpoint must not cause a server error, got {resp.status_code}"
+        )

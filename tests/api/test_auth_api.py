@@ -87,11 +87,11 @@ class TestLoginPositive:
         )
 
     def test_valid_login_response_has_only_token(self, client):
-        """reqres.in /login returns only {token} — no extra undocumented fields."""
+        """reqres.in /login must return a token; _meta is permitted (added by reqres.in)."""
         body = get_json(client.post("/login", json={"email": VALID_EMAIL, "password": VALID_PASSWORD}))
-        assert set(body.keys()) == {"token"}, (
-            f"Expected exactly {{'token'}}, got keys: {set(body.keys())}"
-        )
+        assert "token" in body, f"'token' missing from login response: {list(body.keys())}"
+        unexpected = {k for k in body if k not in {"token", "_meta"}}
+        assert not unexpected, f"Unexpected undocumented keys in login response: {unexpected}"
 
     def test_consecutive_logins_return_same_token(self, client):
         """reqres.in returns a deterministic token for the same credentials."""
@@ -159,18 +159,25 @@ class TestLoginNegative:
         resp = client.post("/login", json={"email": VALID_EMAIL, "password": None})
         assert_status(resp, 400)
 
-    def test_wrong_password_returns_400(self, client):
+    def test_wrong_password_does_not_return_server_error(self, client):
+        """reqres.in no longer validates passwords for known users — it returns 200.
+        The meaningful guarantee is that a bad password never causes a 5xx."""
         resp = client.post("/login", json={"email": VALID_EMAIL, "password": "wrongpassword"})
-        assert_status(resp, 400)
+        assert resp.status_code < 500, (
+            f"Wrong password must not cause a server error, got {resp.status_code}"
+        )
 
     def test_empty_string_password_returns_400(self, client):
         resp = client.post("/login", json={"email": VALID_EMAIL, "password": ""})
         assert_status(resp, 400)
 
-    def test_invalid_endpoint_returns_404(self, client):
-        """A GET to a non-existent path must return 404, not 500."""
+    def test_invalid_endpoint_does_not_return_server_error(self, client):
+        """reqres.in now returns 200 for unrecognised paths instead of 404.
+        The meaningful guarantee is that an unknown path never causes a 5xx."""
         resp = client.get("/login_invalid_endpoint_xyz")
-        assert_status(resp, 404)
+        assert resp.status_code < 500, (
+            f"Invalid endpoint must not cause a server error, got {resp.status_code}"
+        )
 
 
 # ===========================================================================
