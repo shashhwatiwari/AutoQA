@@ -97,9 +97,13 @@ class CheckoutPage(BasePage):
         self.click(self._BACK_HOME_BTN)
 
     def open_step_one(self):
-        """Navigate directly to the checkout info page (bypassing cart)."""
+        """Navigate directly to the checkout info page (bypassing cart).
+
+        Does not wait for any specific element after the navigation — an
+        unauthenticated request is redirected to the login page, so callers
+        that need to assert on the landed page should wait themselves.
+        """
         super().open(self.PATH_STEP_ONE)
-        self.wait_for_visible(self._CONTINUE_BTN)
 
     def get_field_value(self, locator) -> str:
         return self.driver.find_element(*locator).get_attribute("value")

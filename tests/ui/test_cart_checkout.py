@@ -168,6 +168,7 @@ class TestCartBehaviour:
     def test_continue_shopping_returns_to_inventory(self, authenticated_driver, base_url):
         inventory = InventoryPage(authenticated_driver, base_url)
         inventory.open()
+        inventory.add_item_to_cart(0)
         inventory.go_to_cart()
 
         cart = CartPage(authenticated_driver, base_url)

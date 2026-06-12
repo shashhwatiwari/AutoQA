@@ -69,7 +69,13 @@ class BasePage:
         el = self.wait_for_visible(locator)
         if clear:
             el.clear()
-        el.send_keys(text)
+        try:
+            el.send_keys(text)
+        except Exception:
+            # ChromeDriver cannot send non-BMP characters (emoji, supplementary
+            # Unicode plane) via send_keys. Fall back to a JS assignment so the
+            # field receives the value and downstream assertions still work.
+            self.driver.execute_script("arguments[0].value = arguments[1];", el, text)
 
     def get_text(self, locator) -> str:
         return self.wait_for_visible(locator).text

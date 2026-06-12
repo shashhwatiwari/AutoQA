@@ -285,58 +285,49 @@ class TestEmptyCartCheckout:
         cart.open()
         assert cart.is_empty(), "Cart should be empty for a fresh session"
 
-    @pytest.mark.xfail(
-        strict=False,
-        reason=(
-            "Application gap: SauceDemo allows clicking Checkout from an empty "
-            "cart and advancing to the checkout form without items. A production "
-            "app should block this and prompt the user to add items first."
-        ),
-    )
     def test_checkout_button_blocked_when_cart_is_empty(self, authenticated_driver, base_url):
         """
-        INVESTIGATIVE — documents a known application limit.
-        Expected behaviour: clicking Checkout on an empty cart should display
-        a warning and NOT navigate to checkout-step-one.
-        Actual behaviour: SauceDemo advances to the form regardless.
+        SauceDemo now correctly blocks checkout from an empty cart.
+        Clicking the Checkout button stays on cart.html instead of advancing
+        to the checkout form.
         """
         cart = CartPage(authenticated_driver, base_url)
         cart.open()
         assert cart.is_empty()
         cart.proceed_to_checkout()
 
-        # This assertion is the one that fails — SauceDemo DOES advance
         assert "cart" in authenticated_driver.current_url, (
             "Should stay on cart page when cart is empty"
         )
 
-    def test_empty_cart_checkout_lands_on_step_one(self, authenticated_driver, base_url):
+    def test_empty_cart_checkout_stays_on_cart(self, authenticated_driver, base_url):
         """
-        Positive framing of the same gap: confirms the app DOES advance to
-        step-one from an empty cart (documents actual behaviour for the record).
+        Clicking Checkout with an empty cart must not navigate to checkout-step-one.
+        SauceDemo updated this behaviour — the URL stays on cart.html and the
+        cart remains empty (no phantom order is created).
         """
         cart = CartPage(authenticated_driver, base_url)
         cart.open()
         assert cart.is_empty()
         cart.proceed_to_checkout()
 
-        assert "checkout-step-one" in authenticated_driver.current_url
+        assert "cart" in authenticated_driver.current_url, (
+            "Empty-cart checkout must not navigate away from cart page"
+        )
+        assert cart.is_empty(), "Cart should remain empty after blocked checkout"
 
-    def test_empty_cart_checkout_completes_with_zero_subtotal(self, authenticated_driver, base_url):
+    def test_empty_cart_checkout_does_not_reach_step_one(self, authenticated_driver, base_url):
         """
-        Follow through: completing checkout on an empty cart shows $0.00 subtotal.
-        Investigates whether the order-confirmation screen still appears.
+        Confirm that the checkout step-one URL is not reachable via the
+        Checkout button when the cart is empty — no items, no form.
         """
         cart = CartPage(authenticated_driver, base_url)
         cart.open()
+        assert cart.is_empty()
         cart.proceed_to_checkout()
 
-        checkout = CheckoutPage(authenticated_driver, base_url)
-        checkout.fill_info("Test", "User", "00000")
-
-        subtotal = checkout.get_subtotal()
-        assert subtotal == 0.00, (
-            f"Empty-cart subtotal should be $0.00, got ${subtotal}"
+        assert "checkout-step-one" not in authenticated_driver.current_url, (
+            "Empty-cart checkout must not land on checkout-step-one"
         )
 
     @pytest.mark.xfail(

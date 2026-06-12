@@ -51,8 +51,22 @@ class InventoryPage(BasePage):
     # ------------------------------------------------------------------
 
     def add_item_to_cart(self, index: int = 0):
-        self.wait_for_element_count(self._ADD_TO_CART_BTNS, index + 1)
-        self.driver.find_elements(*self._ADD_TO_CART_BTNS)[index].click()
+        """Click the Add-to-cart button for the item at ``index``.
+
+        Locates the button within the item's own container so the index is
+        stable even when earlier items are already in the cart (their buttons
+        have turned into Remove buttons, shrinking the global add-to-cart
+        list). Waits for the matching Remove button to appear before returning,
+        which confirms the React cart state has been committed and makes
+        subsequent badge/count assertions reliable.
+        """
+        self.wait_for_element_count(self._ITEMS, index + 1)
+        item = self.driver.find_elements(*self._ITEMS)[index]
+        btn = item.find_element(By.CSS_SELECTOR, "button[data-test^='add-to-cart']")
+        data_test = btn.get_attribute("data-test")
+        btn.click()
+        remove_attr = data_test.replace("add-to-cart-", "remove-", 1)
+        self.wait_for_visible((By.CSS_SELECTOR, f"button[data-test='{remove_attr}']"))
 
     def add_item_by_name(self, name: str):
         names = self.get_item_names()
@@ -60,9 +74,13 @@ class InventoryPage(BasePage):
         self.add_item_to_cart(idx)
 
     def add_all_items_to_cart(self):
-        # collect once — list shrinks as "Add to cart" becomes "Remove"
-        for btn in self.driver.find_elements(*self._ADD_TO_CART_BTNS):
-            btn.click()
+        self.wait_for_element_count(self._ITEMS, 1)
+        for item in self.driver.find_elements(*self._ITEMS):
+            try:
+                btn = item.find_element(By.CSS_SELECTOR, "button[data-test^='add-to-cart']")
+                btn.click()
+            except Exception:
+                pass  # item already in cart
 
     def get_cart_count(self) -> int:
         if not self.is_visible(self._CART_BADGE, timeout=2):

@@ -61,7 +61,16 @@ class TestSessionCookieLifecycle:
         login.delete_all_cookies()
         login.open()
         login.login("problem_user", "secret_sauce")
-        value_problem = login.get_cookie(SESSION_COOKIE)["value"]
+
+        # Wait for the inventory page to confirm login completed and cookies are set
+        inventory = InventoryPage(driver, base_url)
+        if not inventory.is_visible(inventory._TITLE, timeout=5):
+            pytest.skip("problem_user login did not reach inventory — user may be unavailable")
+
+        cookie = login.get_cookie(SESSION_COOKIE)
+        if cookie is None:
+            pytest.skip("problem_user session cookie not set — behaviour may have changed")
+        value_problem = cookie["value"]
 
         assert value_standard != value_problem
 

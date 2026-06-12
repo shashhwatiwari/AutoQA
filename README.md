@@ -212,7 +212,7 @@ The suite covers three distinct testing layers that together give confidence at 
 
 **Positive tests** walk the intended user journeys end-to-end: a standard login reaches the inventory, all six products render, a cart-to-confirmation checkout completes with correct price arithmetic (`pytest.approx` for floating-point tolerance), and API endpoints return the documented schemas with correct field types.
 
-**Negative and investigative tests** probe the boundary between expected and undefined behaviour. Login attempts use whitespace-only strings, 500-character inputs, special characters, Unicode, XSS payloads, and emoji to determine what the application accepts or rejects. Checkout form fields receive alphabetic postal codes, SQL injection strings, and newline characters. Two tests are marked `xfail` - they document a known gap (SauceDemo does not block checkout from an empty cart) without breaking CI, turning a missing guard into a tracked artefact rather than a silent hole.
+**Negative and investigative tests** probe the boundary between expected and undefined behaviour. Login attempts use whitespace-only strings, 500-character inputs, special characters, Unicode, XSS payloads, and emoji to determine what the application accepts or rejects. Checkout form fields receive alphabetic postal codes, SQL injection strings, and newline characters. One test is marked `xfail` — it documents a known application gap (direct URL access to `/checkout-step-one.html` with a valid session renders the checkout form regardless of cart state) without breaking CI, turning a missing guard into a tracked artefact rather than a silent hole. Empty-cart checkout via the Checkout button is now correctly blocked by SauceDemo and covered by passing tests.
 
 ### UI vs API
 
