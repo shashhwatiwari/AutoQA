@@ -1,0 +1,648 @@
+{
+  "info": {
+    "_postman_id": "autoqa-collection-002",
+    "name": "AutoQA — reqres.in",
+    "description": "Complete API test collection mirroring tests/api/test_users_api.py and tests/api/test_auth_api.py.\nAll requests are self-contained: run the collection in order or in isolation.\nThe 'Login – valid' request extracts the token into {{auth_token}} for downstream reuse.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url",   "value": "https://reqres.in/api", "type": "string" },
+    { "key": "auth_token", "value": "",                      "type": "string" }
+  ],
+  "item": [
+
+    {
+      "name": "Auth – Login",
+      "item": [
+
+        {
+          "name": "Login – valid credentials",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+              "pm.test('Content-Type is JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+              "pm.test('Response time < 5000 ms', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
+              "pm.test('Body has token key', () => pm.expect(pm.response.json()).to.have.property('token'));",
+              "pm.test('Token is a non-empty string', () => {",
+              "  const t = pm.response.json().token;",
+              "  pm.expect(t).to.be.a('string').and.to.have.lengthOf.at.least(8);",
+              "});",
+              "pm.test('Response has ONLY token key', () => {",
+              "  pm.expect(Object.keys(pm.response.json())).to.deep.equal(['token']);",
+              "});",
+              "pm.collectionVariables.set('auth_token', pm.response.json().token);"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"email\":\"eve.holt@reqres.in\",\"password\":\"cityslicka\"}" }
+          }
+        },
+
+        {
+          "name": "Login – missing password → 400",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status is 400', () => pm.response.to.have.status(400));",
+              "pm.test('Content-Type is JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+              "pm.test('error = Missing password', () => pm.expect(pm.response.json().error).to.eql('Missing password'));"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"email\":\"eve.holt@reqres.in\"}" }
+          }
+        },
+
+        {
+          "name": "Login – missing email → 400",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status is 400', () => pm.response.to.have.status(400));",
+              "pm.test('Has error key', () => pm.expect(pm.response.json()).to.have.property('error'));",
+              "pm.test('Error mentions missing', () => {",
+              "  pm.expect(pm.response.json().error.toLowerCase()).to.include('missing');",
+              "});"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"password\":\"cityslicka\"}" }
+          }
+        },
+
+        {
+          "name": "Login – unregistered user → 400",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status is 400', () => pm.response.to.have.status(400));",
+              "pm.test('Has non-empty error', () => {",
+              "  const e = pm.response.json().error;",
+              "  pm.expect(e).to.be.a('string').and.have.length.above(0);",
+              "});"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"email\":\"nobody@nowhere.io\",\"password\":\"x\"}" }
+          }
+        },
+
+        {
+          "name": "Login – empty body → 400",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status is 400', () => pm.response.to.have.status(400));",
+              "pm.test('Has error key', () => pm.expect(pm.response.json()).to.have.property('error'));"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{}" }
+          }
+        },
+
+        {
+          "name": "Login – wrong password → 400",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status is 400', () => pm.response.to.have.status(400));",
+              "pm.test('Has error', () => pm.expect(pm.response.json()).to.have.property('error'));"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"email\":\"eve.holt@reqres.in\",\"password\":\"wrongpassword\"}" }
+          }
+        },
+
+        {
+          "name": "Login – invalid endpoint → 404",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status is 404', () => pm.response.to.have.status(404));"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/login_invalid_endpoint",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{}" }
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "Auth – Register",
+      "item": [
+
+        {
+          "name": "Register – valid credentials",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+              "pm.test('Content-Type is JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+              "pm.test('Response time < 5000 ms', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
+              "pm.test('Has id and token', () => {",
+              "  const b = pm.response.json();",
+              "  pm.expect(b).to.have.property('id');",
+              "  pm.expect(b).to.have.property('token');",
+              "});",
+              "pm.test('id is a positive integer', () => {",
+              "  pm.expect(pm.response.json().id).to.be.a('number').and.above(0);",
+              "});",
+              "pm.test('token is a non-empty string', () => {",
+              "  pm.expect(pm.response.json().token).to.be.a('string').and.have.length.above(0);",
+              "});"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/register",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"email\":\"eve.holt@reqres.in\",\"password\":\"pistol\"}" }
+          }
+        },
+
+        {
+          "name": "Register – missing password → 400",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status is 400', () => pm.response.to.have.status(400));",
+              "pm.test('error = Missing password', () => pm.expect(pm.response.json().error).to.eql('Missing password'));"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/register",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"email\":\"eve.holt@reqres.in\"}" }
+          }
+        },
+
+        {
+          "name": "Register – missing email → 400",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status is 400', () => pm.response.to.have.status(400));",
+              "pm.test('Has error mentioning missing', () => {",
+              "  pm.expect(pm.response.json().error.toLowerCase()).to.include('missing');",
+              "});"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/register",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"password\":\"pistol\"}" }
+          }
+        },
+
+        {
+          "name": "Register – unregistered email → 400",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status is 400', () => pm.response.to.have.status(400));",
+              "pm.test('Has non-empty error', () => {",
+              "  pm.expect(pm.response.json().error).to.be.a('string').and.have.length.above(0);",
+              "});"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/register",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"email\":\"random@test.io\",\"password\":\"pass\"}" }
+          }
+        },
+
+        {
+          "name": "Register – empty body → 400",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status is 400', () => pm.response.to.have.status(400));",
+              "pm.test('Has error key', () => pm.expect(pm.response.json()).to.have.property('error'));"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/register",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{}" }
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "Users – GET",
+      "item": [
+
+        {
+          "name": "List users – page 1 (schema + types)",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+              "pm.test('Content-Type is JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+              "pm.test('Response time < 5000 ms', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
+              "pm.test('Top-level schema keys present', () => {",
+              "  const b = pm.response.json();",
+              "  ['page','per_page','total','total_pages','data'].forEach(k => pm.expect(b).to.have.property(k));",
+              "});",
+              "pm.test('page is integer 1', () => pm.expect(pm.response.json().page).to.eql(1));",
+              "pm.test('per_page is a positive integer', () => {",
+              "  pm.expect(pm.response.json().per_page).to.be.a('number').and.above(0);",
+              "});",
+              "pm.test('total is a positive integer', () => {",
+              "  pm.expect(pm.response.json().total).to.be.a('number').and.above(0);",
+              "});",
+              "pm.test('total_pages is a positive integer', () => {",
+              "  pm.expect(pm.response.json().total_pages).to.be.a('number').and.above(0);",
+              "});",
+              "pm.test('data is a non-empty array', () => {",
+              "  pm.expect(pm.response.json().data).to.be.an('array').and.have.length.above(0);",
+              "});",
+              "pm.test('Each user has required fields', () => {",
+              "  pm.response.json().data.forEach(u => {",
+              "    ['id','email','first_name','last_name','avatar'].forEach(k => pm.expect(u).to.have.property(k));",
+              "  });",
+              "});",
+              "pm.test('All user IDs are positive integers', () => {",
+              "  pm.response.json().data.forEach(u => pm.expect(u.id).to.be.a('number').and.above(0));",
+              "});",
+              "pm.test('All emails contain @', () => {",
+              "  pm.response.json().data.forEach(u => pm.expect(u.email).to.include('@'));",
+              "});",
+              "pm.test('All avatars start with http', () => {",
+              "  pm.response.json().data.forEach(u => pm.expect(u.avatar).to.match(/^https?:\\/\\//));",
+              "});",
+              "pm.collectionVariables.set('page1_ids', JSON.stringify(pm.response.json().data.map(u => u.id)));"
+            ]}
+          }],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/users?page=1"
+          }
+        },
+
+        {
+          "name": "List users – page 2 (disjoint IDs)",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+              "pm.test('page metadata equals 2', () => pm.expect(pm.response.json().page).to.eql(2));",
+              "pm.test('data is non-empty array', () => {",
+              "  pm.expect(pm.response.json().data).to.be.an('array').and.have.length.above(0);",
+              "});",
+              "pm.test('Page 2 IDs do not overlap with page 1', () => {",
+              "  const p1 = JSON.parse(pm.collectionVariables.get('page1_ids') || '[]');",
+              "  const p2 = pm.response.json().data.map(u => u.id);",
+              "  const overlap = p1.filter(id => p2.includes(id));",
+              "  pm.expect(overlap).to.be.empty;",
+              "});"
+            ]}
+          }],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/users?page=2"
+          }
+        },
+
+        {
+          "name": "List users – per_page=3",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+              "pm.test('data has exactly 3 items', () => pm.expect(pm.response.json().data).to.have.lengthOf(3));",
+              "pm.test('per_page metadata equals 3', () => pm.expect(pm.response.json().per_page).to.eql(3));"
+            ]}
+          }],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/users?per_page=3"
+          }
+        },
+
+        {
+          "name": "List users – total_pages consistent with total",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+              "pm.test('total_pages = ceil(total / per_page)', () => {",
+              "  const b = pm.response.json();",
+              "  const expected = Math.ceil(b.total / b.per_page);",
+              "  pm.expect(b.total_pages).to.eql(expected);",
+              "});"
+            ]}
+          }],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/users"
+          }
+        },
+
+        {
+          "name": "Get single user – id=2 (full schema + types + specific value)",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+              "pm.test('Content-Type is JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+              "pm.test('Response time < 5000 ms', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
+              "pm.test('data has user schema', () => {",
+              "  const u = pm.response.json().data;",
+              "  ['id','email','first_name','last_name','avatar'].forEach(k => pm.expect(u).to.have.property(k));",
+              "});",
+              "pm.test('id is a positive integer', () => pm.expect(pm.response.json().data.id).to.be.a('number').and.above(0));",
+              "pm.test('email contains @', () => pm.expect(pm.response.json().data.email).to.include('@'));",
+              "pm.test('avatar starts with http', () => pm.expect(pm.response.json().data.avatar).to.match(/^https?:\\/\\//));",
+              "pm.test('first_name and last_name are non-empty strings', () => {",
+              "  const u = pm.response.json().data;",
+              "  pm.expect(u.first_name).to.be.a('string').and.have.length.above(0);",
+              "  pm.expect(u.last_name ).to.be.a('string').and.have.length.above(0);",
+              "});",
+              "pm.test('email matches fixture value for id=2', () => {",
+              "  pm.expect(pm.response.json().data.email).to.eql('janet.weaver@reqres.in');",
+              "});",
+              "pm.test('Response has support block with url and text', () => {",
+              "  const s = pm.response.json().support;",
+              "  pm.expect(s).to.have.property('url');",
+              "  pm.expect(s).to.have.property('text');",
+              "});"
+            ]}
+          }],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/users/2"
+          }
+        },
+
+        {
+          "name": "Get user – id=9999 → 404 with empty body",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status is 404', () => pm.response.to.have.status(404));",
+              "pm.test('Body is empty object or empty', () => {",
+              "  const text = pm.response.text().trim();",
+              "  pm.expect(text === '{}' || text === '').to.be.true;",
+              "});"
+            ]}
+          }],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/users/9999"
+          }
+        },
+
+        {
+          "name": "Get user – id=0 → 404",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status is 404', () => pm.response.to.have.status(404));"
+            ]}
+          }],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/users/0"
+          }
+        },
+
+        {
+          "name": "Get user – non-integer id → 404",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status is 404', () => pm.response.to.have.status(404));"
+            ]}
+          }],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/users/abc"
+          }
+        },
+
+        {
+          "name": "List users – delay=1 (artificial delay endpoint)",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+              "pm.test('Returns valid list schema', () => {",
+              "  const b = pm.response.json();",
+              "  ['page','per_page','total','total_pages','data'].forEach(k => pm.expect(b).to.have.property(k));",
+              "});"
+            ]}
+          }],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/users?delay=1"
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "Users – Write",
+      "item": [
+
+        {
+          "name": "Create user → 201 (echoed fields, id, createdAt)",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+              "pm.test('Content-Type is JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+              "pm.test('Response time < 5000 ms', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
+              "pm.test('name is echoed back exactly', () => pm.expect(pm.response.json().name).to.eql('AutoQA Bot'));",
+              "pm.test('job is echoed back exactly', () => pm.expect(pm.response.json().job).to.eql('QA Engineer'));",
+              "pm.test('id is present and non-empty', () => {",
+              "  pm.expect(pm.response.json()).to.have.property('id');",
+              "  pm.expect(pm.response.json().id).to.have.length.above(0);",
+              "});",
+              "pm.test('createdAt is present and a non-empty string', () => {",
+              "  pm.expect(pm.response.json().createdAt).to.be.a('string').and.have.length.above(0);",
+              "});"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/users",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"name\":\"AutoQA Bot\",\"job\":\"QA Engineer\"}" }
+          }
+        },
+
+        {
+          "name": "Create user – minimal payload (name only)",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+              "pm.test('name is echoed', () => pm.expect(pm.response.json().name).to.eql('Minimal User'));",
+              "pm.test('id present', () => pm.expect(pm.response.json()).to.have.property('id'));"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/users",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"name\":\"Minimal User\"}" }
+          }
+        },
+
+        {
+          "name": "Update user PUT → 200 (all fields echoed, updatedAt)",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+              "pm.test('Content-Type is JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+              "pm.test('Response time < 5000 ms', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
+              "pm.test('name echoed', () => pm.expect(pm.response.json().name).to.eql('Updated Bot'));",
+              "pm.test('job echoed', () => pm.expect(pm.response.json().job).to.eql('Senior QA'));",
+              "pm.test('updatedAt is a non-empty string', () => {",
+              "  pm.expect(pm.response.json().updatedAt).to.be.a('string').and.have.length.above(0);",
+              "});"
+            ]}
+          }],
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/users/2",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"name\":\"Updated Bot\",\"job\":\"Senior QA\"}" }
+          }
+        },
+
+        {
+          "name": "Partial update PATCH → 200 (changed field + updatedAt)",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+              "pm.test('Content-Type is JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+              "pm.test('Response time < 5000 ms', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
+              "pm.test('job is echoed with the patched value', () => {",
+              "  pm.expect(pm.response.json().job).to.eql('Principal QA');",
+              "});",
+              "pm.test('updatedAt is a non-empty string', () => {",
+              "  pm.expect(pm.response.json().updatedAt).to.be.a('string').and.have.length.above(0);",
+              "});"
+            ]}
+          }],
+          "request": {
+            "method": "PATCH",
+            "url": "{{base_url}}/users/2",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"job\":\"Principal QA\"}" }
+          }
+        },
+
+        {
+          "name": "Delete user → 204 (empty body)",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Status is 204', () => pm.response.to.have.status(204));",
+              "pm.test('Response time < 5000 ms', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
+              "pm.test('Body is empty', () => pm.expect(pm.response.text().trim()).to.eql(''));"
+            ]}
+          }],
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/users/2"
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "Auth – Token Usage",
+      "item": [
+
+        {
+          "name": "Authenticated GET with Bearer token",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": { "exec": [
+                "if (!pm.collectionVariables.get('auth_token')) {",
+                "  pm.sendRequest({",
+                "    url: pm.collectionVariables.get('base_url') + '/login',",
+                "    method: 'POST',",
+                "    header: { 'Content-Type': 'application/json' },",
+                "    body: { mode: 'raw', raw: JSON.stringify({ email: 'eve.holt@reqres.in', password: 'cityslicka' }) }",
+                "  }, (err, res) => {",
+                "    pm.collectionVariables.set('auth_token', res.json().token);",
+                "  });",
+                "}"
+              ]}
+            },
+            {
+              "listen": "test",
+              "script": { "exec": [
+                "pm.test('Status is 200 with Bearer token', () => pm.response.to.have.status(200));",
+                "pm.test('Response contains user data', () => pm.expect(pm.response.json()).to.have.property('data'));"
+              ]}
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/users/2",
+            "header": [{ "key": "Authorization", "value": "Bearer {{auth_token}}" }]
+          }
+        },
+
+        {
+          "name": "Public endpoint without token – still 200",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('Public endpoint accessible without token', () => pm.response.to.have.status(200));"
+            ]}
+          }],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/users/2"
+          }
+        }
+
+      ]
+    }
+
+  ]
+}
